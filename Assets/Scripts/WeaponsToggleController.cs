@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using VRTK;
 
-public class GunsToggleController : MonoBehaviour
+public class WeaponsToggleController : MonoBehaviour
 {
     [SerializeField]
     private VRTK_ControllerEvents rightControllerEvents;
@@ -26,6 +26,18 @@ public class GunsToggleController : MonoBehaviour
     [SerializeField]
     private AudioClip holsterSound;
 
+    [SerializeField]
+    private GameObject grenadePrefab;
+
+    [SerializeField]
+    private Transform grenadeSpawn;
+
+    [SerializeField]
+    private int grenadesNumber;
+
+    [SerializeField]
+    private float grenadeSpawnDelay;
+
     private List<GameObject> gunList;
 
     private GameObject currentGun = null;
@@ -42,6 +54,25 @@ public class GunsToggleController : MonoBehaviour
     void Update()
     {
         Toggle();
+        ThrowGrenade();
+
+    }
+
+    void ThrowGrenade()
+    {
+        if ((rightControllerEvents.buttonOnePressed || Input.GetKeyDown(KeyCode.P)) && grenadesNumber > 0)
+        {
+            grenadesNumber--;
+            StartCoroutine(GrenadeSpawnDelay());
+        }
+    }
+    private IEnumerator GrenadeSpawnDelay()
+    {
+        //Wait for set amount of time before spawning grenade
+        yield return new WaitForSeconds(grenadeSpawnDelay);
+        //Spawn grenade prefab at spawnpoint
+        GameObject o = Instantiate(grenadePrefab, grenadeSpawn.transform.position, grenadeSpawn.transform.rotation);
+
     }
 
     void Toggle()
@@ -74,7 +105,7 @@ public class GunsToggleController : MonoBehaviour
             gunList.RemoveAt(0); //超过数量则把最先的枪扔掉
         }
 
-        gunList.Add (currentGun);
+        gunList.Add(currentGun);
 
         currentGun
             .GetComponent<VRTK_InteractableObject>()
@@ -110,4 +141,5 @@ public class GunsToggleController : MonoBehaviour
             ? leftGrab.GetGrabbedObject()
             : rightGrab.GetGrabbedObject();
     }
+
 }

@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRTK;
 
-[RequireComponent(typeof (Rigidbody))]
+[RequireComponent(typeof(Rigidbody))]
 public class Weapon : VRTK_InteractableObject
 {
     [SerializeField]
@@ -41,7 +41,10 @@ public class Weapon : VRTK_InteractableObject
     private soundClips SoundClips;
 
     [SerializeField]
-    protected int bulletNumber;
+    protected int sumBulletNumber;
+
+    [SerializeField]
+    protected int maxBulletNumber;//弹夹子弹数
 
     [SerializeField]
     private VRTK_ControllerEvents _controller;
@@ -69,7 +72,7 @@ public class Weapon : VRTK_InteractableObject
     protected virtual void Start()
     {
         shootAudioSource.clip = SoundClips.shootSound;
-        currentBulletNumber = bulletNumber;
+        currentBulletNumber = maxBulletNumber;
         _rigbody = GetComponent<Rigidbody>();
     }
 
@@ -90,7 +93,7 @@ public class Weapon : VRTK_InteractableObject
         {
             bulletNumberText.gameObject.SetActive(true);
             iconImage.gameObject.SetActive(true);
-            bulletNumberText.text = currentBulletNumber + "/" + bulletNumber;
+            bulletNumberText.text = currentBulletNumber + "/" + sumBulletNumber+"\n"+"damage:"+damage;
         }
         else
         {
@@ -117,9 +120,9 @@ public class Weapon : VRTK_InteractableObject
     protected void reloadBullets()
     {
         if (
-            currentBulletNumber != bulletNumber &&
+            currentBulletNumber != maxBulletNumber && sumBulletNumber > 0 &&
             (_controller.buttonOnePressed || Input.GetKeyDown(KeyCode.O)) &&
-            !reloading //左手按钮1或R键
+            !reloading //左手按钮1或O键
         )
         {
             mainAudioSource.clip =
@@ -129,8 +132,6 @@ public class Weapon : VRTK_InteractableObject
 
             mainAudioSource.Play();
             reloading = true;
-            Debug.Log(mainAudioSource.ToString());
-                        Debug.Log(mainAudioSource.clip.ToString());
 
             StartCoroutine(reloadingBullets());
         }
@@ -140,9 +141,11 @@ public class Weapon : VRTK_InteractableObject
     {
 
         yield return new WaitForSeconds(mainAudioSource.clip.length);
-
         reloading = false;
+        int bulletNumber = Mathf.Min(sumBulletNumber, maxBulletNumber);
         currentBulletNumber = bulletNumber;
+        sumBulletNumber -= bulletNumber;
+
     }
 
     // private void SetupInteractableWeaponEvents()
@@ -174,7 +177,7 @@ public class Weapon : VRTK_InteractableObject
     {
         currentBulletNumber--;
 
-        Debug.Log ("Shooting");
+        Debug.Log("Shooting");
         shootAudioSource.Play();
         ApplyRecoil();
         ApplyCasing();

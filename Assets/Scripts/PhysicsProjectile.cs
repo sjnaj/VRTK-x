@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof (Rigidbody))]
+[RequireComponent(typeof(Rigidbody))]
 public class PhysicsProjectile : Projectile
 {
     [SerializeField]
@@ -28,18 +28,17 @@ public class PhysicsProjectile : Projectile
         rigidbody
             .AddRelativeForce(Vector3.forward * weapon.GetShootForce(),
             ForceMode.Impulse); //向前发射
-                Debug.Log("Shooting");
 
     }
 
-    private void OnTraggerEnter(Collider collider)
-    {
-        Destroy (gameObject);
-        ITakeDamage[] damageTakers =
-            collider.GetComponentsInChildren<ITakeDamage>();
-        foreach (ITakeDamage damageTaker in damageTakers)
-        {
-            damageTaker.TakeDamage(weapon, this, transform.position);
-        }
-    }
+    // private void OnTraggerEnter(Collider collider)
+    // {
+    //     Destroy(gameObject);
+    //     ITakeDamage[] damageTakers =
+    //         collider.GetComponentsInChildren<ITakeDamage>();
+    //     foreach (ITakeDamage damageTaker in damageTakers)
+    //     {
+    //         damageTaker.TakeDamage(damage, transform.position);
+    //     }
+    // }
 }
