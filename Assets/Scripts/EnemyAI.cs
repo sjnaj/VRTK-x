@@ -3,19 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-[RequireComponent(typeof(NavMeshAgent))]
-public class EnemyAI : MonoBehaviour, ITakeDamage
+[RequireComponent(typeof (NavMeshAgent))]
+public class EnemyAI : MonoBehaviour
 {
-    const string RUN_TRIGGER = "Run";
-
-    const string CROUCH_TRIGGER = "Crouch";
-
-    const string SHOOT_TRIGGER = "Shoot";
-
-    const string RELOAD_TRIGGER = "Reload";
-
+    // const string RUN_TRIGGER = "Run";
+    // const string CROUCH_TRIGGER = "Crouch";
+    // const string SHOOT_TRIGGER = "Shoot";
+    // const string RELOAD_TRIGGER = "Reload";
     private float _health;
-
 
     [SerializeField]
     private float startingHealth;
@@ -46,13 +41,14 @@ public class EnemyAI : MonoBehaviour, ITakeDamage
     private int shootingAccuracy;
 
     [SerializeField]
-    private float reactTime;//开枪反应时间
+    private float reactTime; //开枪反应时间
 
     [SerializeField]
-    private float healthThreshold;//逃跑血量阈值
-
+    private float healthThreshold; //逃跑血量阈值
 
     private bool isShooting;
+
+    private bool isCover;
 
     private int currentBulletsTaken;
 
@@ -66,17 +62,29 @@ public class EnemyAI : MonoBehaviour, ITakeDamage
 
     private Animator animator;
 
-    public float health
+    private AudioSource mainAudioSource;
+
+    public AudioSource walkAudioSource;
+
+    [System.Serializable]
+    public class SoundClips
     {
-        get
-        {
-            return health;
-        }
-        set
-        {
-            _health = Mathf.Clamp(value, 0, startingHealth);
-        }
+        public AudioClip walkSound;
+
+        public AudioClip shootSound;
+
+        public AudioClip reloadSoundOutOfAmmo;
     }
+
+    public SoundClips soundClips;
+
+    public Transform bulletPrefab;
+
+    public Transform bulletSpawnpoint;
+
+    public float bulletForce;
+
+    public float health;
 
     // public void TakeDamage(
     //     Weapon weapon,
@@ -86,15 +94,19 @@ public class EnemyAI : MonoBehaviour, ITakeDamage
     // {
     //     throw new System.NotImplementedException();
     // }
-
-
     void Awake()
     {
         animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
-        animator.SetTrigger(RUN_TRIGGER);
+        mainAudioSource = GetComponent<AudioSource>();
+        currentBulletsTaken = Random.Range(minBulletsToTake, maxBulletsToTake);
+        walkAudioSource.clip = soundClips.walkSound;
+        walkAudioSource.loop = true;
+
         _health = startingHealth;
+
         isShooting = false;
+        isCover = false;
     }
 
     public void Init(Player player, Transform coverSpot)
@@ -104,14 +116,14 @@ public class EnemyAI : MonoBehaviour, ITakeDamage
         GetToCover();
     }
 
+
     private void GetToCover()
     {
         agent.isStopped = false;
         agent.SetDestination(occupiedCoverSpot.position);
     }
+
     // Start is called before the first frame update
-
-
     void Start()
     {
     }
@@ -119,120 +131,172 @@ public class EnemyAI : MonoBehaviour, ITakeDamage
     // Update is called once per frame
     void Update()
     {
-
+        // Debug.Log((transform.position - occupiedCoverSpot.position).sqrMagnitude);
         if (isShooting == false)
-            if (agent.isStopped == true)
+        {
+            if (agent.velocity.magnitude > 1f)
+            {
+                animator.SetFloat("Vertical", 1.0f, 0, Time.deltaTime);
+                animator.SetFloat("Horizontal", 0.0f, 0, Time.deltaTime);
+                if (!walkAudioSource.isPlaying)
+                {
+                    walkAudioSource.Play();
+                }
+            }
+            else
+            {
+                animator.SetFloat("Vertical", 0.0f, 0, Time.deltaTime);
+                animator.SetFloat("Horizontal", 0.0f, 0, Time.deltaTime);
+                if (walkAudioSource.isPlaying)
+                {
+                    walkAudioSource.Pause();
+                }
+            }
+            if (
+                agent.isStopped == true && !isCover // 导航到据点且不处于隐藏状态
+            )
             {
                 StartCoroutine(InitializeShootingCO());
             }
-            else if (agent.isStopped == false && (transform.position - occupiedCoverSpot.position).sqrMagnitude < 0.1f)
+            else if (
+                agent.isStopped == false &&
+                (transform.position - occupiedCoverSpot.position).sqrMagnitude <
+                1f //导航到位
+            )
             {
                 agent.isStopped = true;
-                StartCoroutine(InitializeShootingCO());
             }
-            else if (agent.isStopped == false && IsPlayerVisible())//行走过程中
+            else if (
+                agent.isStopped == false && IsPlayerVisible() //行走过程中看见玩家
+            )
             {
                 if (health >= healthThreshold && currentBulletsTaken > 0)
-                    StartCoroutine(walkShoot());
+                {
+                    StartCoroutine(Shoot());
+                }
+                else
+                    run();
             }
-
+        }
     }
 
+    private void run()
+    {
+    }
 
-    private void RotateTowardPlayer()
+    private IEnumerator RotateTowardPlayer()
     {
         Vector3 direction = player.GetHeadPosition() - transform.position;
         direction.y = 0;
         Quaternion rotation = Quaternion.LookRotation(direction);
-        rotation = Quaternion.RotateTowards(transform.rotation, rotation, rotateSpeed * Time.deltaTime);
-        transform.rotation = rotation;
+        Quaternion deltaRotation = Quaternion.identity;
+        while (transform.rotation != rotation)
+        {
+            deltaRotation =
+                Quaternion
+                    .RotateTowards(transform.rotation,
+                    rotation,
+                    rotateSpeed * Time.deltaTime);
+            transform.rotation = deltaRotation;
+            yield return 1;
+        }
     }
 
     private bool IsPlayerVisible()
     {
         RaycastHit hit;
         Vector3 direction = player.GetHeadPosition() - transform.position;
-        return Physics.Raycast(transform.position, direction, out hit) && hit.collider.GetComponentInParent<Player>();
+
+        return Physics
+            .Raycast(transform.position, direction, out hit, 50, ~(1 << 2)) &&
+        hit.collider.transform.parent.tag == "Player";
     }
 
     private IEnumerator InitializeShootingCO()
     {
-        isShooting = true;
+        isCover = true;
         HideBehindCover();
-        yield return new WaitForSeconds(Random.Range(minTimeUnderCover, maxTimeUnderCover));
-        Shoot();
+        yield return new WaitForSeconds(Random
+                    .Range(minTimeUnderCover, maxTimeUnderCover));
+        StartCoroutine(Shoot());
+        isCover = false;
     }
 
     private void HideBehindCover()
     {
-        animator.SetTrigger(CROUCH_TRIGGER);
+        // animator.play("cover");
     }
 
-    private void Shoot()
-    {
-        RotateTowardPlayer();
-        int shotsOneTime = Random.Range(1, maxShotsOntTime);
-        if (currentBulletsTaken > 0)
-        {
-            if (shotsOneTime > currentBulletsTaken)
-                shotsOneTime = currentBulletsTaken;
-            currentBulletsTaken -= shotsOneTime;
-            while (shotsOneTime-- > 0)
-            {
-                animator.SetTrigger(SHOOT_TRIGGER);
-                bool hitPlay = Random.Range(0, 100) < shootingAccuracy;
-                if (hitPlay)
-                {
-                    if (IsPlayerVisible())
-                    {
-                        player.TakeDamage(damage);
-                    }
-                }
-            }
-
-
-        }
-        if (currentBulletsTaken <= 0)
-        {
-            Reload();
-        }
-        isShooting = false;
-
-    }
-
-    private void Reload()
-    {
-        if (currentBulletsTaken <= 0)
-        {
-            currentBulletsTaken = Random.Range(maxBulletsToTake, maxBulletsToTake);
-            animator.SetTrigger(RELOAD_TRIGGER);
-        }
-    }
-    private IEnumerator walkShoot()
+    private IEnumerator Shoot()
     {
         isShooting = true;
-        yield return new WaitForSeconds(reactTime);
-        RotateTowardPlayer();
-        if (currentBulletsTaken > 0)
+        yield return StartCoroutine(RotateTowardPlayer());
+        if (IsPlayerVisible())
         {
-            currentBulletsTaken--;
-            bool hitPlay = Random.Range(0, 100) < shootingAccuracy;
-            if (hitPlay)
+            bool flag = agent.isStopped;
+            if (!flag) agent.isStopped = true;
+            isShooting = true;
+            int shotsOneTime = Random.Range(1, maxShotsOntTime);
+            if (currentBulletsTaken > 0)
             {
-                player.TakeDamage(damage);
+                if (shotsOneTime > currentBulletsTaken)
+                    shotsOneTime = currentBulletsTaken;
+                currentBulletsTaken -= shotsOneTime;
+                while (shotsOneTime-- > 0)
+                {
+                    StartCoroutine(ShootOnce());
+                }
             }
+            if (currentBulletsTaken <= 0)
+            {
+                 StartCoroutine(Reload());
+            }
+            if (!flag) agent.isStopped = false;
         }
+        isShooting = false;
     }
 
-    public void TakeDamage(float damage, Vector3 contactPoint)
+    private IEnumerator ShootOnce()
+    {
+        //Play shoot sound
+        mainAudioSource.clip = soundClips.shootSound;
+        mainAudioSource.Play();
+
+        animator.Play("Fire", 1, 0.0f);
+
+        //Spawn bullet from bullet spawnpoint
+        var bullet =
+            (Transform)
+            Instantiate(bulletPrefab,
+            bulletSpawnpoint.transform.position,
+            bulletSpawnpoint.transform.rotation);
+
+        //Add velocity to the bullet
+        bullet.GetComponent<Rigidbody>().velocity =
+            bullet.transform.forward * 20;
+        bool hitPlay = Random.Range(0, 100) < shootingAccuracy;
+
+        if (hitPlay && IsPlayerVisible())
+        {
+            player.TakeDamage (damage);
+        }
+        yield return new WaitForSeconds(0.1f);
+    }
+
+    private IEnumerator Reload()
+    {
+        currentBulletsTaken = Random.Range(minBulletsToTake, maxBulletsToTake);
+        animator.Play("Reload", 1, 0.0f);
+        mainAudioSource.clip = soundClips.reloadSoundOutOfAmmo;
+        yield return new WaitForSeconds(mainAudioSource.clip.length);
+    }
+
+    public void TakeDamage(float damage)
     {
         health -= damage;
         if (health <= 0)
         {
-            Destroy(gameObject);
+            Destroy (gameObject);
         }
     }
-
-
 }
-

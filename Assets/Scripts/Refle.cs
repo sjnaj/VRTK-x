@@ -7,8 +7,6 @@ public class Refle : Weapon
     [SerializeField]
     private float fireRate;
 
-    [SerializeField]
-    private Projectile bulletPrefab;
 
     private WaitForSeconds wait;
 

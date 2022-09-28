@@ -13,6 +13,9 @@ public class Weapon : VRTK_InteractableObject
     protected float shootingForce;
 
     [SerializeField]
+    protected Projectile bulletPrefab;
+
+    [SerializeField]
     protected Transform bulletSpawn;
 
     [SerializeField]
@@ -74,6 +77,7 @@ public class Weapon : VRTK_InteractableObject
         shootAudioSource.clip = SoundClips.shootSound;
         currentBulletNumber = maxBulletNumber;
         _rigbody = GetComponent<Rigidbody>();
+        bulletPrefab.GetComponent<BulletScript>().demage=damage;//设置子弹伤害，不考虑伤害衰减
     }
 
     protected override void Update()

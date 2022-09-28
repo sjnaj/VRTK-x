@@ -298,7 +298,7 @@ namespace VRTK
 
         protected float bodyMass = 100f;
 
-        protected float bodyRadius = 0.01f;
+        protected float bodyRadius = 0.1f;
 
         protected float leanForwardLengthAddition = 0.05f;
 

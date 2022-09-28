@@ -19,6 +19,8 @@ public class BulletScript : MonoBehaviour {
 	public Transform [] dirtImpactPrefabs;
 	public Transform []	concreteImpactPrefabs;
 
+	public float demage;
+
 	private void Start () 
 	{
 		//Start destroy timer
@@ -60,6 +62,7 @@ public class BulletScript : MonoBehaviour {
 				(0, bloodImpactPrefabs.Length)], transform.position, 
 				Quaternion.LookRotation (collision.contacts [0].normal));
 			//Destroy bullet object
+			collision.transform.GetComponent<EnemyAI>().TakeDamage(demage);
 			Destroy(gameObject);
 		}
 

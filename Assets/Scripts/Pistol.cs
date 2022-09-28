@@ -6,8 +6,7 @@ using VRTK;
 
 public class Pistol : Weapon
 {
-    [SerializeField]
-    private Projectile bulletPrefab;
+    
 
     // protected override void StartShooting()
     // {
