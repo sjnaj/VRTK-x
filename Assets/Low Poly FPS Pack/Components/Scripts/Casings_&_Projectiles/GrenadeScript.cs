@@ -1,9 +1,8 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections;
+using UnityEngine;
 
 public class GrenadeScript : MonoBehaviour
 {
-
     [Header("Timer")]
     //Time before the grenade explodes
     [Tooltip("Time before the grenade explodes")]
@@ -17,6 +16,7 @@ public class GrenadeScript : MonoBehaviour
     //Radius of the explosion
     [Tooltip("The radius of the explosion force")]
     public float radius = 25.0F;
+
     //Intensity of the explosion
     [Tooltip("The intensity of the explosion force")]
     public float power = 350.0F;
@@ -24,8 +24,10 @@ public class GrenadeScript : MonoBehaviour
     [Header("Throw Force")]
     [Tooltip("Minimum throw force")]
     public float minimumForce = 1500.0f;
+
     [Tooltip("Maximum throw force")]
     public float maximumForce = 2500.0f;
+
     private float throwForce;
 
     [Header("Audio")]
@@ -35,27 +37,25 @@ public class GrenadeScript : MonoBehaviour
     {
         //Generate random throw force
         //based on min and max values
-        throwForce = Random.Range
-            (minimumForce, maximumForce);
+        throwForce = Random.Range(minimumForce, maximumForce);
 
         //Random rotation of the grenade
-        GetComponent<Rigidbody>().AddRelativeTorque
-           (Random.Range(500, 1500), //X Axis
-            Random.Range(0, 0),          //Y Axis
-            Random.Range(0, 0)           //Z Axis
-            * Time.deltaTime * 5000);
-
+        GetComponent<Rigidbody>()
+            .AddRelativeTorque(Random.Range(500, 1500), //X Axis
+            Random.Range(0, 0), //Y Axis
+            Random.Range(0, 0) * //Z Axis
+            Time.deltaTime *
+            5000);
     }
 
     private void Start()
     {
         //Launch the projectile forward by adding force to it at start
-        GetComponent<Rigidbody>().AddForce(gameObject.transform.forward * throwForce);
+        GetComponent<Rigidbody>()
+            .AddForce(gameObject.transform.forward * throwForce);
 
         //Start the explosion timer
         StartCoroutine(ExplosionTimer());
-
-
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -69,18 +69,22 @@ public class GrenadeScript : MonoBehaviour
         //Wait set amount of time
         yield return new WaitForSeconds(grenadeTimer);
 
-
         //Raycast downwards to check ground
         RaycastHit checkGround;
-        if (Physics.Raycast(transform.position, Vector3.down, out checkGround, 50))
+        if (
+            Physics
+                .Raycast(transform.position, Vector3.down, out checkGround, 50)
+        )
         {
             //Instantiate metal explosion prefab on ground
-            Instantiate(explosionPrefab, checkGround.point,
-                Quaternion.FromToRotation(Vector3.forward, checkGround.normal));
+            Instantiate(explosionPrefab,
+            checkGround.point,
+            Quaternion.FromToRotation(Vector3.forward, checkGround.normal));
         }
 
         //Explosion force
         Vector3 explosionPos = transform.position;
+
         //Use overlapshere to check for nearby colliders
         Collider[] colliders = Physics.OverlapSphere(explosionPos, radius);
         foreach (Collider hit in colliders)
@@ -92,20 +96,38 @@ public class GrenadeScript : MonoBehaviour
                 rb.AddExplosionForce(power * 5, explosionPos, radius, 3.0F);
 
             //If the explosion hits "Target" tag and isHit is false
-            if (hit.GetComponent<Collider>().tag == "Target"
-                    && hit.gameObject.GetComponent<TargetScript>().isHit == false)
+            if (
+                hit.GetComponent<Collider>().tag == "Target" &&
+                hit.gameObject.GetComponent<TargetScript>().isHit == false
+            )
             {
-                //Animate the target 
+                //Animate the target
                 hit.gameObject.GetComponent<Animation>().Play("target_down");
+
                 //Toggle "isHit" on target object
                 hit.gameObject.GetComponent<TargetScript>().isHit = true;
+            }
+
+            // Debug.Log(hit.transform.tag);
+
+            if (hit.transform.tag == "Blood")
+            {
+                hit
+                    .transform
+                    .GetComponentInParent<EnemyAI>()?
+                    .TakeDamage((explosionPos - hit.transform.position)
+                        .magnitude <
+                    3f
+                        ? 100
+                        : 50);
             }
 
             //If the explosion hits "ExplosiveBarrel" tag
             if (hit.GetComponent<Collider>().tag == "ExplosiveBarrel")
             {
                 //Toggle "explode" on explosive barrel object
-                hit.gameObject.GetComponent<ExplosiveBarrelScript>().explode = true;
+                hit.gameObject.GetComponent<ExplosiveBarrelScript>().explode =
+                    true;
             }
 
             //If the explosion hits "GasTank" tag
@@ -113,12 +135,14 @@ public class GrenadeScript : MonoBehaviour
             {
                 //Toggle "isHit" on gas tank object
                 hit.gameObject.GetComponent<GasTankScript>().isHit = true;
+
                 //Reduce explosion timer on gas tank object to make it explode faster
-                hit.gameObject.GetComponent<GasTankScript>().explosionTimer = 0.05f;
+                hit.gameObject.GetComponent<GasTankScript>().explosionTimer =
+                    0.05f;
             }
         }
 
         //Destroy the grenade object on explosion
-        Destroy(gameObject);
+        Destroy (gameObject);
     }
 }

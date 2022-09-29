@@ -10,8 +10,6 @@ public class EnemyAI : MonoBehaviour
     // const string CROUCH_TRIGGER = "Crouch";
     // const string SHOOT_TRIGGER = "Shoot";
     // const string RELOAD_TRIGGER = "Reload";
-    private float _health;
-
     [SerializeField]
     private float startingHealth;
 
@@ -84,7 +82,7 @@ public class EnemyAI : MonoBehaviour
 
     public float bulletForce;
 
-    public float health;
+    private float health;
 
     // public void TakeDamage(
     //     Weapon weapon,
@@ -103,7 +101,7 @@ public class EnemyAI : MonoBehaviour
         walkAudioSource.clip = soundClips.walkSound;
         walkAudioSource.loop = true;
 
-        _health = startingHealth;
+        health = startingHealth;
 
         isShooting = false;
         isCover = false;
@@ -116,6 +114,10 @@ public class EnemyAI : MonoBehaviour
         GetToCover();
     }
 
+    public bool getState()
+    {
+        return agent.isStopped;
+    }
 
     private void GetToCover()
     {
@@ -160,9 +162,12 @@ public class EnemyAI : MonoBehaviour
             }
             else if (
                 agent.isStopped == false &&
-                (transform.position - occupiedCoverSpot.position).sqrMagnitude <
-                1f //导航到位
+                new Vector2(transform.position.x - occupiedCoverSpot.position.x,
+                    transform.position.z - occupiedCoverSpot.position.z)
+                    .magnitude <
+                1f
             )
+            //导航到位(不考虑高度差异)
             {
                 agent.isStopped = true;
             }
@@ -173,15 +178,23 @@ public class EnemyAI : MonoBehaviour
                 if (health >= healthThreshold && currentBulletsTaken > 0)
                 {
                     StartCoroutine(Shoot());
+                    occupiedCoverSpot.position = player.GetHeadPosition();
+                    agent.SetDestination(occupiedCoverSpot.position); //追击
                 }
                 else
-                    run();
+                    run(); //
             }
         }
     }
 
     private void run()
     {
+        if ((transform.position - player.GetHeadPosition()).magnitude < 20f)
+        {
+            occupiedCoverSpot.position =
+                (transform.position - player.GetHeadPosition()) * 20;
+            agent.SetDestination(occupiedCoverSpot.position);
+        }
     }
 
     private IEnumerator RotateTowardPlayer()
@@ -233,8 +246,12 @@ public class EnemyAI : MonoBehaviour
         yield return StartCoroutine(RotateTowardPlayer());
         if (IsPlayerVisible())
         {
+            if (currentBulletsTaken <= 0)
+            {
+                yield return StartCoroutine(Reload());
+            }
             bool flag = agent.isStopped;
-            if (!flag) agent.isStopped = true;
+            if (!flag) agent.isStopped = true; //射击时暂停导航
             isShooting = true;
             int shotsOneTime = Random.Range(1, maxShotsOntTime);
             if (currentBulletsTaken > 0)
@@ -244,13 +261,10 @@ public class EnemyAI : MonoBehaviour
                 currentBulletsTaken -= shotsOneTime;
                 while (shotsOneTime-- > 0)
                 {
-                    StartCoroutine(ShootOnce());
+                    yield return StartCoroutine(ShootOnce());
                 }
             }
-            if (currentBulletsTaken <= 0)
-            {
-                 StartCoroutine(Reload());
-            }
+
             if (!flag) agent.isStopped = false;
         }
         isShooting = false;
@@ -273,14 +287,14 @@ public class EnemyAI : MonoBehaviour
 
         //Add velocity to the bullet
         bullet.GetComponent<Rigidbody>().velocity =
-            bullet.transform.forward * 20;
+            bullet.transform.forward * bulletForce;
         bool hitPlay = Random.Range(0, 100) < shootingAccuracy;
 
         if (hitPlay && IsPlayerVisible())
         {
             player.TakeDamage (damage);
         }
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(0.15f);
     }
 
     private IEnumerator Reload()

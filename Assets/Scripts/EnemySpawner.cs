@@ -57,18 +57,20 @@ public class EnemySpawner : MonoBehaviour
         EnemyAI enemy =
             Instantiate(enemyPrefab, transform.position, transform.rotation);
 
-        // int spawnPointIndex = spawnEnemies.Count % spawnPoints.Length;
-        int spawnPointIndex = Random.Range(0, spawnPoints.Length);
+        int spawnPointIndex = spawnEnemies.Count % spawnPoints.Length;
         enemy.Init(player, spawnPoints[spawnPointIndex]);
         spawnEnemies.Add (enemy);
     }
+
+    int i = 0;
 
     void Patrol()
     {
         foreach (var enemy in spawnEnemies)
         {
-            enemy
-                .Init(player, spawnPoints[Random.Range(0, spawnPoints.Length)]);
+            if (
+                enemy.getState() == true //如果导航结束，则开始新一次巡逻
+            ) enemy.Init(player, spawnPoints[(++i) % spawnPoints.Length]);
         }
     }
 }

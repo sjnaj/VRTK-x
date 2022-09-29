@@ -482,10 +482,10 @@ MonoBehaviour:
   - {fileID: 2084440823}
   enemyPrefab: {fileID: 1087746625714799106, guid: 78dfc7e64de57cd47b2ce94cd9da732f,
     type: 3}
-  spawnInterval: 10
-  maxEnemiesNumber: 3
+  spawnInterval: 5
+  maxEnemiesNumber: 1
   player: {fileID: 929166304}
-  patrolInterval: 60
+  patrolInterval: 30
 --- !u!1 &246320986
 GameObject:
   m_ObjectHideFlags: 0
@@ -637,7 +637,7 @@ MonoBehaviour:
   allowedTouchControllers: 0
   ignoredColliders: []
   isGrabbable: 1
-  holdButtonToGrab: 1
+  holdButtonToGrab: 0
   stayGrabbedOnTeleport: 1
   validDrop: 1
   grabOverrideButton: 0
@@ -990,6 +990,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8644063224272567230, guid: 2626dc8b8735d02489bd94b350ee46a3,
+        type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 8644063224272567230, guid: 2626dc8b8735d02489bd94b350ee46a3,
         type: 3}
@@ -1754,6 +1759,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   health: 200
+  recoverInterval: 5
   head: {fileID: 2135241148}
 --- !u!114 &929166312
 MonoBehaviour:

@@ -490,7 +490,7 @@ MonoBehaviour:
   grenadeTimer: 2.5
   explosionPrefab: {fileID: 4811645123968692, guid: 301583a5af63a494298d60cd9f296909,
     type: 3}
-  radius: 3
+  radius: 5
   power: 500
   minimumForce: 750
   maximumForce: 1000

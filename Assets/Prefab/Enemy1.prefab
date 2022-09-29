@@ -6678,7 +6678,7 @@ GameObject:
   - component: {fileID: 1087746625714799106}
   m_Layer: 2
   m_Name: Enemy1
-  m_TagString: Blood
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6884,10 +6884,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startingHealth: 100
-  minTimeUnderCover: 3
+  minTimeUnderCover: 2
   maxTimeUnderCover: 6
   minBulletsToTake: 5
-  maxBulletsToTake: 10
+  maxBulletsToTake: 15
   maxShotsOntTime: 5
   rotateSpeed: 200
   damage: 20
@@ -6903,7 +6903,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 4879702113200764, guid: 5953171a59c27394e9ad5cbb564affa8,
     type: 3}
   bulletSpawnpoint: {fileID: 1087746624585653699}
-  bulletForce: 500
+  bulletForce: 200
 --- !u!1 &1087746625714898169
 GameObject:
   m_ObjectHideFlags: 0
@@ -6915,9 +6915,10 @@ GameObject:
   - component: {fileID: 1087746625714673881}
   - component: {fileID: 1087746625718012343}
   - component: {fileID: 2834132350414686376}
+  - component: {fileID: 163708065397707998}
   m_Layer: 2
   m_Name: third_person_character
-  m_TagString: Untagged
+  m_TagString: Blood
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7130,6 +7131,20 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!136 &163708065397707998
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1087746625714898169}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.2
+  m_Height: 2
+  m_Direction: 2
+  m_Center: {x: -0.00000047683716, y: 0.007801435, z: 0.8183369}
 --- !u!1 &1087746625714898171
 GameObject:
   m_ObjectHideFlags: 0
